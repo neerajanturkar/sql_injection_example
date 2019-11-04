@@ -12,33 +12,45 @@ router.post('/login/', function(request,response){
 
     let email = request.body.email;
     let password = request.body.password;
-
-
-    let query = "SELECT id, user_type, firstname, lastname, email " + 
-                    "FROM `user` " +
-                    "WHERE email = '"+email+"' AND  password = md5('"+password+"');";
-
-    sql.query(query ,function(err, res){
+   
+    /**
+     * Use of Stored Procedure
+     */
+    let query = "CALL login(?,?,@success,@sessionId);";
+    
+    /**
+     * Use of prepared statement
+     */
+    sql.query(query,[email,password] ,function(err, res){
         var result = {};
-        if(err) {
-            
-            result['data'] = res;
-            result['success'] = true;
-            result['message'] = err;
+        if(!err){
+        if(res['affectedRows'] == 1){
+            let query = "SELECT @success, @sessionId;";
+            sql.query(query,function(err,res){
+                if(!err){
+                    if(res[0]['@success'] == 1){
+                         result['success'] = true;
+                         result['sessionId'] = res[0]['@sessionId'];
+                         result['message'] = "Authentication Successful!"  
+                         response.json(result);         
+                    }else if(res[0]['@success'] == 0){
+                        result['success'] = false;
+                        result['message'] = "Authentication Failed! No user with given email and password exists!!"  
+                        response.json(result);         
+                    }
+                }
+                
+            });
+        }
+    }else{
+        
+        result['success'] = false;
+        result['message'] = err;
 
-            response.json(result); 
-        }
-        else if(res.length == 0){           
-            result['data'] = res;
-            result['success'] = true;
-            result['message'] = "Authentication failed : No matching email & password found";
-            response.json(result);             
-        }else{
-            result['data'] = res;
-            result['success'] = true;
-            result['message'] = "Authentication successfull!";
-            response.json(result);
-        }
+        response.json(result); 
+    }
+
+      
     });
     
             
