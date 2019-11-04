@@ -12,11 +12,17 @@ router.post('/login/', function(request,response){
 
     let email = request.body.email;
     let password = request.body.password;
-
+    /**
+     * Missing server side validations
+     */
+   
 
     let query = "SELECT id, user_type, firstname, lastname, email " + 
                     "FROM `user` " +
                     "WHERE email = '"+email+"' AND  password = md5('"+password+"');";
+    /**
+     * Use of concatinated query
+     */
 
     sql.query(query ,function(err, res){
         var result = {};
@@ -39,6 +45,10 @@ router.post('/login/', function(request,response){
             result['message'] = "Authentication successfull!";
             response.json(result);
         }
+        /**
+         * Mising checks for data to send as response 
+         * thereby leaking data of all users
+         */
     });
     
             
